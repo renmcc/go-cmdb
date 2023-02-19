@@ -7,7 +7,7 @@
 * 再启动CMDB
 
 # 架构图
-
+```
 go-cmdb 
 ├── apps                                      # 具体业务场景的领域包
 │   ├── apps.go
@@ -50,6 +50,7 @@ go-cmdb
 ├── README.md
 └── version                                  # 程序版本信息
     └── version.go
+```
 
 # 快速开发
 
