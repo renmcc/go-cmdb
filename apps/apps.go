@@ -4,14 +4,11 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/renmcc/go-cmdb/apps/host"
 )
 
 // IOC 容器层: 管理所有app实现和gin路由
 
 var (
-	HostService host.Service
-
 	// 维护当前所有的服务
 	implApps = map[string]ImplService{}
 	ginApps  = map[string]GinService{}
@@ -30,10 +27,6 @@ func RegistryImpl(svc ImplService) {
 	}
 	// 服务实例注册到svcs map当中
 	implApps[svc.Name()] = svc
-	// 根据对象满足的接口来注册具体的服务
-	// if v, ok := svc.(host.Service); ok {
-	// 	HostService = v
-	// }
 }
 
 // app初始化

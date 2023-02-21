@@ -23,8 +23,8 @@ go-cmdb
 │   │   │   └── view.go
 │   │   ├── interface.go                     # host接口
 │   │   └── model.go                         # host主机数据模型
-│   └── registry
-│       └── registry.go                      # 注册所有HTTP服务模块, 暴露给框架HTTP服务器加载。    
+│   └── all
+│       └── impl.go                          # 注册所有HTTP服务模块, 暴露给框架HTTP服务器加载。    
 ├── cmd                                      # 脚手架功能: 处理程序启停参数，加载系统配置文件
 │   ├── root.go
 │   └── start.go

@@ -66,7 +66,7 @@ func LoadGlobalLogger() error {
 	case ToStdout:
 		// 把日志打印到标准输出
 		zapConfig.ToStderr = true
-		// 并没在把日志输入输出到文件
+		// 把日志输入输出到文件
 		zapConfig.ToFiles = false
 	case ToFile:
 		zapConfig.Files.Name = "api.log"

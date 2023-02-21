@@ -13,8 +13,8 @@ import (
 	"github.com/renmcc/go-cmdb/conf"
 	"github.com/spf13/cobra"
 
-	// 注册所有的服务实例
-	_ "github.com/renmcc/go-cmdb/apps/registry"
+	// 注册所有的app
+	_ "github.com/renmcc/go-cmdb/apps/all"
 )
 
 var (

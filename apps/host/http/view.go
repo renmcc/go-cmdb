@@ -2,9 +2,9 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/infraboard/mcube/logger/zap"
 	"github.com/renmcc/go-cmdb/apps/host"
 )
 
@@ -17,7 +17,7 @@ func (h *Handler) createHost(c *gin.Context) {
 
 	// 用户传递过来的参数进行解析, 实现了一个json 的unmarshal
 	if err := c.ShouldBindJSON(ins); err != nil {
-		zap.L().Named("host.http").Error(err.Error())
+		h.log.Named("createHost").Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
 		return
 	}
@@ -25,8 +25,12 @@ func (h *Handler) createHost(c *gin.Context) {
 	// 进行接口调用, 写入数据库
 	ins, err := h.svc.CreateHost(c.Request.Context(), ins)
 	if err != nil {
-		zap.L().Named("host.http").Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		h.log.Named("createHost").Error(err.Error())
+		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "ServiceUnavailable"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		}
 		return
 	}
 

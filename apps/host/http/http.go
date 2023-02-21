@@ -2,6 +2,8 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/infraboard/mcube/logger"
+	"github.com/infraboard/mcube/logger/zap"
 	"github.com/renmcc/go-cmdb/apps"
 	"github.com/renmcc/go-cmdb/apps/host"
 )
@@ -15,6 +17,7 @@ var handler = &Handler{}
 // 该实体类, 会实现Gin的Http Handler
 type Handler struct {
 	svc host.Service
+	log logger.Logger
 }
 
 // 完成了 Http Handler的注册
@@ -27,9 +30,10 @@ func (h *Handler) Name() string {
 	return host.AppName
 }
 
-// 从IOC里面获取HostService的实例对象
+// 从IOC里面获取HostService的实例对象,进行断言
 func (h *Handler) Config() {
 	h.svc = apps.GetImpl(h.Name()).(host.Service)
+	h.log = zap.L().Named("Host.Http")
 }
 
 // 完成Http Handler注册
