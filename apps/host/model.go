@@ -27,6 +27,26 @@ type Host struct {
 	*Describe
 }
 
+// 结构体校验
+func (h *Host) Validate() error {
+	return validate.Struct(h)
+}
+
+// 字段默认值
+func (h *Host) InjectDefault() {
+	if h.CreateAt == 0 {
+		h.CreateAt = time.Now().UnixMilli()
+	}
+}
+
+// Host模型构造函数
+func NewHost() *Host {
+	return &Host{
+		Resource: &Resource{},
+		Describe: &Describe{},
+	}
+}
+
 // 资源公共属性部分
 type Resource struct {
 	Id          string            `json:"id"  validate:"required" binding:"required"`     // 全局唯一Id
@@ -55,24 +75,4 @@ type Describe struct {
 	OSType       string `json:"os_type"`                                       // 操作系统类型，分为Windows和Linux
 	OSName       string `json:"os_name"`                                       // 操作系统名称
 	SerialNumber string `json:"serial_number"`                                 // 序列号
-}
-
-// 结构体校验
-func (h *Host) Validate() error {
-	return validate.Struct(h)
-}
-
-// 字段默认值
-func (h *Host) InjectDefault() {
-	if h.CreateAt == 0 {
-		h.CreateAt = time.Now().UnixMilli()
-	}
-}
-
-// Host模型构造函数
-func NewHost() *Host {
-	return &Host{
-		Resource: &Resource{},
-		Describe: &Describe{},
-	}
 }

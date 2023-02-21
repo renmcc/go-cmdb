@@ -35,6 +35,15 @@ type Config struct {
 	MySQL *MySQL `toml:"mysql"`
 }
 
+// 初始化一个有默认值的Config对象
+func NewDefaultConfig() *Config {
+	return &Config{
+		App:   NewDefaultApp(),
+		Log:   NewDefaultLog(),
+		MySQL: NewDefaultMySQL(),
+	}
+}
+
 type App struct {
 	Name string `toml:"name" env:"APP_NAME"`
 	Host string `toml:"host" env:"APP_HOST"`
@@ -46,12 +55,30 @@ func (a *App) HttpAddr() string {
 	return fmt.Sprintf("%s:%s", a.Host, a.Port)
 }
 
+// 构造函数
+func NewDefaultApp() *App {
+	return &App{
+		Name: "demo",
+		Host: "127.0.0.1",
+		Port: "8050",
+	}
+}
+
 // 用于配置全局Logger对象
 type Log struct {
 	Level   string    `toml:"level" env:"LOG_LEVEL"`
 	Format  LogFormat `toml:"format" env:"LOG_FORMAT"`
 	To      LogTo     `toml:"to" env:"LOG_TO"`
 	PathDir string    `toml:"path_dir" env:"LOG_PATH_DIR"`
+}
+
+// 构造函数
+func NewDefaultLog() *Log {
+	return &Log{
+		Level:  "info",
+		Format: TextFormat,
+		To:     ToStdout,
+	}
 }
 
 // 用于配置全局MySql对象
@@ -68,31 +95,7 @@ type MySQL struct {
 	lock        sync.Mutex
 }
 
-// 初始化一个有默认值的Config对象
-func NewDefaultConfig() *Config {
-	return &Config{
-		App:   NewDefaultApp(),
-		Log:   NewDefaultLog(),
-		MySQL: NewDefaultMySQL(),
-	}
-}
-
-func NewDefaultApp() *App {
-	return &App{
-		Name: "demo",
-		Host: "127.0.0.1",
-		Port: "8050",
-	}
-}
-
-func NewDefaultLog() *Log {
-	return &Log{
-		Level:  "info",
-		Format: TextFormat,
-		To:     ToStdout,
-	}
-}
-
+// 构造函数
 func NewDefaultMySQL() *MySQL {
 	return &MySQL{
 		Host:        "127.0.0.1",

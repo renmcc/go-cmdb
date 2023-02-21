@@ -14,5 +14,5 @@ database = "go_db"
 [log]
 level = "debug"
 path_dir = "./logs"
-# format = "json"
+format = "text"
 to = "stdout"

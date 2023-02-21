@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +39,60 @@ func (h *Handler) createHost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"code": http.StatusCreated, "message": ins})
 }
 
-func (h *Handler) test(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "hello test"})
+func (h *Handler) queryHost(c *gin.Context) {
+	// 默认查询参数
+	req := host.NewQueryHostRequest()
+	// 从http请求的query string 中获取参数
+	qs := c.Request.URL.Query()
+
+	var err error
+	if qs.Get("page_size") != "" {
+		req.PageSize, err = strconv.Atoi(qs.Get("page_size"))
+		if err != nil {
+			h.log.Named("queryHost").Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+			return
+		}
+	}
+
+	if qs.Get("page_number") != "" {
+		req.PageNumber, err = strconv.Atoi(qs.Get("page_number"))
+		if err != nil {
+			h.log.Named("queryHost").Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+			return
+		}
+	}
+
+	if qs.Get("name") != "" {
+		req.Name = "%" + qs.Get("name") + "%"
+	}
+
+	if qs.Get("description") != "" {
+		req.Description = "%" + qs.Get("description") + "%"
+	}
+
+	if qs.Get("privateip") != "" {
+		req.PrivateIp = "%" + qs.Get("privateip") + "%"
+	}
+
+	if qs.Get("publicip") != "" {
+		req.PublicIp = "%" + qs.Get("publicip") + "%"
+	}
+	// 数据校验
+	if err := req.Validate(); err != nil {
+		h.log.Named("queryHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+		return
+	}
+
+	// 进行数据库查询
+	set, err := h.svc.QueryHost(c.Request.Context(), req)
+	if err != nil {
+		h.log.Named("queryHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": set})
 }

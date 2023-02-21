@@ -8,6 +8,7 @@ import (
 
 	"github.com/infraboard/mcube/logger/zap"
 	"github.com/renmcc/go-cmdb/apps/host"
+	"github.com/renmcc/go-cmdb/apps/host/impl"
 	"github.com/renmcc/go-cmdb/conf"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,12 +41,24 @@ func TestCreate(t *testing.T) {
 	}
 }
 
+func TestQuery(t *testing.T) {
+	should := assert.New(t)
+	req := host.NewQueryHostRequest()
+	req.Name = "test"
+	set, err := service.QueryHost(context.Background(), req)
+	if should.NoError(err) {
+		for _, v := range set.Items {
+			fmt.Printf("v: %+v\n", *v)
+		}
+	}
+}
+
 func init() {
 	// 初始化全局Logger
 	zap.DevelopmentSetup()
 	// 初始化config
 	conf.LoadConfigFromToml("../../../etc/config.toml")
 	// host service 的具体实现
-	// service = impl.NewMysqlImpl()
+	service = impl.NewHostServiceImpl()
 
 }

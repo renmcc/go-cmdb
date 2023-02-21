@@ -59,7 +59,7 @@ func LoadGlobalLogger() error {
 	zapConfig.Level = level
 
 	// 程序每启动一次, 不必都生成一个新日志文件
-	zapConfig.Files.RotateOnStartup = false
+	zapConfig.Files.RotateOnStartup = true
 
 	// 配置日志的输出方式
 	switch lc.To {
@@ -77,6 +77,8 @@ func LoadGlobalLogger() error {
 	switch lc.Format {
 	case JSONFormat:
 		zapConfig.JSON = true
+	case TextFormat:
+		zapConfig.JSON = false
 	}
 
 	// 把配置应用到全局Logger

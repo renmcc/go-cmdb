@@ -1,6 +1,8 @@
 package host
 
-import "context"
+import (
+	"context"
+)
 
 // host app  增删改查接口定义
 type Service interface {
@@ -17,11 +19,53 @@ type Service interface {
 }
 
 type HostSet struct {
-	Items []*Host
 	Total int
+	Items []*Host
+}
+
+func (s *HostSet) Add(item *Host) {
+	s.Items = append(s.Items, item)
+}
+
+// 构造函数
+func NewHostSet() *HostSet {
+	return &HostSet{
+		Items: []*Host{},
+	}
 }
 
 type QueryHostRequest struct {
+	PageSize    int    `json:"page_size" validate:"max=50"`
+	PageNumber  int    `json:"page_number" `
+	Name        string `json:"name" validate:"max=12"`
+	Description string `json:"description" validate:"max=12"`
+	PrivateIp   string `json:"privateip" validate:"max=16"`
+	PublicIp    string `json:"publicip" validate:"max=16"`
+}
+
+func (req *QueryHostRequest) GetPageSize() uint {
+	return uint(req.PageSize)
+}
+
+func (req *QueryHostRequest) OffSet() int64 {
+	return int64((req.PageNumber - 1) * req.PageSize)
+}
+
+// 结构体校验
+func (req *QueryHostRequest) Validate() error {
+	return validate.Struct(req)
+}
+
+// 构造函数
+func NewQueryHostRequest() *QueryHostRequest {
+	return &QueryHostRequest{
+		PageSize:    20,
+		PageNumber:  1,
+		Name:        "%",
+		Description: "%",
+		PrivateIp:   "%",
+		PublicIp:    "%",
+	}
 }
 
 type UpdateHostRequest struct {
