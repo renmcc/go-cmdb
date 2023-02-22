@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/imdario/mergo"
 	"github.com/renmcc/go-cmdb/apps/host"
 )
 
@@ -131,7 +132,7 @@ func (h *Handler) describeHost(c *gin.Context) {
 
 	// 空查询处理
 	if set == nil {
-		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "no rows in result set"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "no rows in result set"})
 		return
 	}
 
@@ -159,7 +160,7 @@ func (h *Handler) putHost(c *gin.Context) {
 
 	// 空查询处理
 	if set == nil {
-		c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "no rows in result set"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "no rows in result set"})
 		return
 	}
 
@@ -193,4 +194,106 @@ func (h *Handler) putHost(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": ret})
+}
+
+func (h *Handler) patchHost(c *gin.Context) {
+	// 从http请求的query string 中获取参数
+	req := host.NewDescribeHostRequest(c.Param("id"))
+
+	// 数据校验
+	if err := req.Validate(); err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+		return
+	}
+
+	// 进行数据库查询
+	set, err := h.svc.DescribeHost(c.Request.Context(), req)
+	if err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
+		return
+	}
+
+	// 空查询处理
+	if set == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "no rows in result set"})
+		return
+	}
+
+	// 解析Body里面的数据
+	ins := host.NewHost()
+	if err := c.ShouldBindJSON(ins); err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		return
+	}
+
+	// 合并数据
+	if err := mergo.MergeWithOverwrite(set, ins); err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		return
+	}
+
+	// 数据校验
+	if err := set.Validate(); err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		return
+	}
+
+	// 确保ID一致
+	set.Id = req.Id
+
+	// 进行数据更新
+	ret, err := h.svc.UpdateHost(c.Request.Context(), set)
+	if err != nil {
+		h.log.Named("patchHost").Error(err.Error())
+		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "ServiceUnavailable"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": ret})
+}
+
+func (h *Handler) deleteHost(c *gin.Context) {
+	// 从http请求的query string 中获取参数
+	req := host.NewDescribeHostRequest(c.Param("id"))
+	// 数据校验
+	if err := req.Validate(); err != nil {
+		h.log.Named("deleteHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+		return
+	}
+	// 进行数据库查询
+	set, err := h.svc.DescribeHost(c.Request.Context(), req)
+	if err != nil {
+		h.log.Named("deleteHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
+		return
+	}
+
+	// 空查询处理
+	if set == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "no rows in result set"})
+		return
+	}
+
+	// 删除数据
+	deleteReq := host.NewDeleteHostRequest(set.Id)
+	err = h.svc.DeleteHost(c.Request.Context(), deleteReq)
+	if err != nil {
+		h.log.Named("deleteHost").Error(err.Error())
+		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "ServiceUnavailable"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": "delete success"})
 }

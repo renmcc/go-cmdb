@@ -37,6 +37,7 @@ func (h *Host) Validate() error {
 func (h *Host) InjectDefault() {
 	if h.CreateAt == 0 {
 		h.CreateAt = time.Now().UnixMilli()
+		h.Status = "1"
 	}
 }
 
@@ -69,7 +70,7 @@ type Resource struct {
 	Type        string            `json:"type"  validate:"required,max=12" `  // 规格
 	Name        string            `json:"name"  validate:"required,max=12" `  // 名称
 	Description string            `json:"description"`                        // 描述
-	Status      string            `json:"status"`                             // 服务商中的状态
+	Status      string            `json:"status"`                             // 服务商中的状态，1正常 0删除
 	Tags        map[string]string `json:"tags"`                               // 标签
 	UpdateAt    int64             `json:"update_at"`                          // 更新时间
 	SyncAt      int64             `json:"sync_at"`                            // 同步时间

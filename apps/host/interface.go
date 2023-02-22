@@ -15,7 +15,7 @@ type Service interface {
 	// 主机更新
 	UpdateHost(context.Context, *Host) (*Host, error)
 	// 主机删除
-	DeleteHost(context.Context, *DeleteHostRequest) (*Host, error)
+	DeleteHost(context.Context, *DeleteHostRequest) error
 }
 
 type HostSet struct {
@@ -86,5 +86,17 @@ func NewDescribeHostRequest(id string) *DescribeHostRequest {
 }
 
 type DeleteHostRequest struct {
-	Id string
+	Id string `json:"id"  validate:"required,max=15"`
+}
+
+// 结构体校验
+func (req *DeleteHostRequest) Validate() error {
+	return validate.Struct(req)
+}
+
+// 构造函数
+func NewDeleteHostRequest(id string) *DeleteHostRequest {
+	return &DeleteHostRequest{
+		Id: id,
+	}
 }

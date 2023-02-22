@@ -22,6 +22,6 @@ func (i *HostServiceImpl) UpdateHost(ctx context.Context, req *host.Host) (*host
 	return nil, nil
 }
 
-func (i *HostServiceImpl) DeleteHost(ctx context.Context, req *host.DeleteHostRequest) (*host.Host, error) {
-	return nil, nil
+func (i *HostServiceImpl) DeleteHost(context.Context, *host.DeleteHostRequest) error {
+	return nil
 }

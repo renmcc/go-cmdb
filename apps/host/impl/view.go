@@ -180,6 +180,37 @@ func (i *HostServiceImpl) UpdateHost(ctx context.Context, ins *host.Host) (*host
 	return ins, nil
 }
 
-func (i *HostServiceImpl) DeleteHost(ctx context.Context, req *host.DeleteHostRequest) (*host.Host, error) {
-	return nil, nil
+func (i *HostServiceImpl) DeleteHost(ctx context.Context, req *host.DeleteHostRequest) error {
+	// 开启一个事务
+	tx, err := i.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	// 通过Defer处理事务提交方式
+	// 1. 无报错，则Commit 事务
+	// 2. 有报错，则Rollback 事务
+	defer func() {
+		if err != nil {
+			if err := tx.Rollback(); err != nil {
+				i.log.Error("rollback error, %s", err.Error())
+			}
+		} else {
+			if err := tx.Commit(); err != nil {
+				i.log.Error("commit error, %s", err.Error())
+			}
+		}
+	}()
+
+	// 更新 Resource表
+	resStmt, err := tx.PrepareContext(ctx, deleteHostSQL)
+	if err != nil {
+		return err
+	}
+	_, err = resStmt.ExecContext(ctx, req.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
