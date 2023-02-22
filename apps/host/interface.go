@@ -11,9 +11,9 @@ type Service interface {
 	// 查询主机列表
 	QueryHost(context.Context, *QueryHostRequest) (*HostSet, error)
 	// 查询主机详情
-	DescribeHost(context.Context, *QueryHostRequest) (*Host, error)
+	DescribeHost(context.Context, *DescribeHostRequest) (*Host, error)
 	// 主机更新
-	UpdateHost(context.Context, *UpdateHostRequest) (*Host, error)
+	UpdateHost(context.Context, *Host) (*Host, error)
 	// 主机删除
 	DeleteHost(context.Context, *DeleteHostRequest) (*Host, error)
 }
@@ -31,6 +31,7 @@ func (s *HostSet) Add(item *Host) {
 func NewHostSet() *HostSet {
 	return &HostSet{
 		Items: []*Host{},
+		Total: 0,
 	}
 }
 
@@ -68,8 +69,20 @@ func NewQueryHostRequest() *QueryHostRequest {
 	}
 }
 
-type UpdateHostRequest struct {
-	*Describe
+type DescribeHostRequest struct {
+	Id string `json:"id"  validate:"required,max=15"`
+}
+
+// 结构体校验
+func (req *DescribeHostRequest) Validate() error {
+	return validate.Struct(req)
+}
+
+// 构造函数
+func NewDescribeHostRequest(id string) *DescribeHostRequest {
+	return &DescribeHostRequest{
+		Id: id,
+	}
 }
 
 type DeleteHostRequest struct {

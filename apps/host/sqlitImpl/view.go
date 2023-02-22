@@ -14,11 +14,11 @@ func (i *HostServiceImpl) QueryHost(ctx context.Context, req *host.QueryHostRequ
 	return nil, nil
 }
 
-func (i *HostServiceImpl) DescribeHost(ctx context.Context, req *host.QueryHostRequest) (*host.Host, error) {
+func (i *HostServiceImpl) DescribeHost(ctx context.Context, req *host.DescribeHostRequest) (*host.Host, error) {
 	return nil, nil
 }
 
-func (i *HostServiceImpl) UpdateHost(ctx context.Context, req *host.UpdateHostRequest) (*host.Host, error) {
+func (i *HostServiceImpl) UpdateHost(ctx context.Context, req *host.Host) (*host.Host, error) {
 	return nil, nil
 }
 

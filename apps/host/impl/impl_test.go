@@ -53,6 +53,16 @@ func TestQuery(t *testing.T) {
 	}
 }
 
+func TestDescribe(t *testing.T) {
+	should := assert.New(t)
+
+	req := host.NewDescribeHostRequest("ins-05")
+	ins, err := service.DescribeHost(context.Background(), req)
+	if should.NoError(err) {
+		fmt.Println(ins.Id)
+	}
+}
+
 func init() {
 	// 初始化全局Logger
 	zap.DevelopmentSetup()
