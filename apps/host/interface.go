@@ -19,8 +19,8 @@ type Service interface {
 }
 
 type HostSet struct {
-	Total int
-	Items []*Host
+	Total int     `json:"total"`
+	Items []*Host `json:"items"`
 }
 
 func (s *HostSet) Add(item *Host) {

@@ -34,16 +34,16 @@ func (i *HostServiceImpl) Config() {
 	i.log = zap.L().Named("Host")
 }
 
-// _ import app 自动执行注册逻辑
-func init() {
-	//  对象注册到ioc层
-	apps.RegistryImpl(impl)
-}
-
 // 构造函数
 func NewHostServiceImpl() *HostServiceImpl {
 	return &HostServiceImpl{
 		log: zap.L().Named("Host"),
 		db:  conf.C().MySQL.GetDB(),
 	}
+}
+
+// _ import app 自动执行注册逻辑
+func init() {
+	//  对象注册到ioc层
+	apps.RegistryImpl(impl)
 }
