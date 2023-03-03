@@ -3,11 +3,11 @@ package impl
 import (
 	"database/sql"
 
-	"github.com/infraboard/mcube/logger"
-	"github.com/infraboard/mcube/logger/zap"
 	"github.com/renmcc/go-cmdb/apps"
 	"github.com/renmcc/go-cmdb/apps/host"
 	"github.com/renmcc/go-cmdb/conf"
+	"github.com/renmcc/toolbox/logger"
+	"github.com/renmcc/toolbox/logger/zap"
 )
 
 var (

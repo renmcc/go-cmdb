@@ -5,10 +5,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/infraboard/mcube/logger"
-	"github.com/infraboard/mcube/logger/zap"
 	"github.com/renmcc/go-cmdb/apps"
 	"github.com/renmcc/go-cmdb/protocol"
+	"github.com/renmcc/toolbox/logger"
+	"github.com/renmcc/toolbox/logger/zap"
 
 	"github.com/renmcc/go-cmdb/conf"
 	"github.com/spf13/cobra"

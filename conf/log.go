@@ -3,7 +3,7 @@ package conf
 import (
 	"fmt"
 
-	"github.com/infraboard/mcube/logger/zap"
+	"github.com/renmcc/toolbox/logger/zap"
 )
 
 // LogFormat 日志格式

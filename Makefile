@@ -2,6 +2,7 @@ PROJECT_NAME=go-cmdb
 MAIN_FILE=main.go
 PKG := "github.com/renmcc/$(PROJECT_NAME)"
 MOD_DIR := $(shell go env GOMODCACHE)
+HOST_OS := $(shell go env GOHOSTOS)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
@@ -11,6 +12,15 @@ BUILD_COMMIT := ${shell git rev-parse HEAD}
 BUILD_TIME := ${shell date '+%Y-%m-%d %H:%M:%S'}
 BUILD_GO_VERSION := $(shell go version | grep -o  'go[0-9].[0-9].*')
 VERSION_PATH := "${PKG}/version"
+
+ifeq ($(HOST_OS),windows)
+	MOD_DIR := ${shell go env GOPATH |sed 's/^/\/&/' | sed 's/:/\//'}/pkg/mod
+else
+	MOD_DIR := $(shell go env GOPATH)/pkg/mod
+endif
+TOOLBOX_MODULE := "github.com/renmcc/toolbox"
+TOOLBOX_VERSION :=$(shell go list -m ${TOOLBOX_MODULE} | cut -d' ' -f2)
+TOOLBOX_PKG_PATH := ${MOD_DIR}/${TOOLBOX_MODULE}@${TOOLBOX_VERSION}
 
 .PHONY: all dep lint vet test test-coverage build clean
 
@@ -37,6 +47,11 @@ build: dep ## Build the binary file
 
 linux: dep ## Build the binary file
 	@GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" -o dist/demo-api $(MAIN_FILE)
+
+pb: ## Copy mcube protobuf files to common/pb
+	@mkdir -pv common/pb/github.com/renmcc/toolbox/pb
+	@cp -r ${TOOLBOX_PKG_PATH}/pb/* common/pb/github.com/renmcc/toolbox/pb
+	@rm -rf common/pb/github.com/renmcc/toolbox/pb/*/*.go
 
 run: # Run Develop server
 	@go run $(MAIN_FILE) start -f etc/config.toml
