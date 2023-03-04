@@ -55,6 +55,15 @@ func (a *App) HttpAddr() string {
 	return fmt.Sprintf("%s:%s", a.Host, a.Port)
 }
 
+func (a *App) RestAddr() string {
+	return fmt.Sprintf("%s:%s", a.Host, fmt.Sprintf("2%s", a.Port))
+}
+
+// grpc启动参数
+func (a *App) GrpcAddr() string {
+	return fmt.Sprintf("%s:%s", a.Host, fmt.Sprintf("1%s", a.Port))
+}
+
 // 构造函数
 func NewDefaultApp() *App {
 	return &App{

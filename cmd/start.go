@@ -27,11 +27,9 @@ var (
 // 用于管理所有需要启动的服务
 type manager struct {
 	http *protocol.HttpService
+	rest *protocol.RestfulService
+	grpc *protocol.GRPCService
 	log  logger.Logger
-}
-
-func (m *manager) Start() error {
-	return m.http.Start()
 }
 
 // 处理来自外部的中断信号, 比如Terminal
@@ -40,6 +38,13 @@ func (m *manager) WaitStop(ch <-chan os.Signal) {
 		switch v {
 		default:
 			m.log.Infof("received signal: %s", v)
+			// 先关闭内部调用
+			if err := m.grpc.Stop(); err != nil {
+				m.log.Error(err)
+			}
+			// 关闭restful
+			m.rest.Stop()
+			// 再关闭外部调用
 			m.http.Stop()
 		}
 	}
@@ -49,6 +54,8 @@ func (m *manager) WaitStop(ch <-chan os.Signal) {
 func newManager() *manager {
 	return &manager{
 		http: protocol.NewHttpService(),
+		rest: protocol.NewRestfulService(),
+		grpc: protocol.NewGRPCService(),
 		log:  zap.L().Named("CLI"),
 	}
 }
@@ -78,7 +85,11 @@ var StartCmd = &cobra.Command{
 
 		signal.Notify(ch, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP, syscall.SIGINT)
 		go svc.WaitStop(ch)
-		return svc.Start()
+		// 后台启动grpc
+		go svc.grpc.Start()
+		// 后台启动restful
+		go svc.rest.Start()
+		return svc.http.Start()
 	},
 }
 

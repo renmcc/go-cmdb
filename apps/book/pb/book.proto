@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package demo.book;
-option go_package = "gitee.com/go-course/mcube-demo/apps/book";
+package book;
+option go_package = "github.com/renmcc/go-cmdb/apps/book";
 
 import "common/pb/github.com/opengoats/goat/pb/page/page.proto";
 import "common/pb/github.com/opengoats/goat/pb/request/request.proto";
@@ -14,6 +14,11 @@ service Service {
     rpc DeleteBook(DeleteBookRequest) returns(Book);
 }
 
+
+enum Catalog {
+    TECH = 0;
+    EDU = 1;
+}
 
 // Book todo
 message Book {

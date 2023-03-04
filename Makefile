@@ -53,6 +53,12 @@ pb: ## Copy mcube protobuf files to common/pb
 	@cp -r ${TOOLBOX_PKG_PATH}/pb/* common/pb/github.com/opengoats/goat/pb
 	@rm -rf common/pb/github.com/opengoats/goat/pb/*/*.go
 
+gen: ## generate code
+	@protoc -I=. -I=common/pb --go_out=. --go-grpc_out=. --go_opt=module="${PKG}" --go-grpc_opt=module="${PKG}"  apps/*/pb/*.proto
+	@ go fmt ./...
+	@protoc-go-inject-tag -input=apps/*/*.pb.go
+	@mcube generate enum -p -m apps/*/*.pb.go
+
 run: # Run Develop server
 	@go run $(MAIN_FILE) start -f etc/config.toml
 
