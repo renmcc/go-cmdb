@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/imdario/mergo v0.3.13
-	github.com/renmcc/toolbox v1.0.2
+	github.com/opengoats/goat v1.0.1
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
 )

@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/opengoats/goat/logger/zap"
 	"github.com/renmcc/go-cmdb/apps/host"
 	"github.com/renmcc/go-cmdb/apps/host/impl"
 	"github.com/renmcc/go-cmdb/conf"
-	"github.com/renmcc/toolbox/logger/zap"
 	"github.com/stretchr/testify/assert"
 )
 

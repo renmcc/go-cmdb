@@ -18,7 +18,7 @@ ifeq ($(HOST_OS),windows)
 else
 	MOD_DIR := $(shell go env GOPATH)/pkg/mod
 endif
-TOOLBOX_MODULE := "github.com/renmcc/toolbox"
+TOOLBOX_MODULE := "github.com/opengoats/goat"
 TOOLBOX_VERSION :=$(shell go list -m ${TOOLBOX_MODULE} | cut -d' ' -f2)
 TOOLBOX_PKG_PATH := ${MOD_DIR}/${TOOLBOX_MODULE}@${TOOLBOX_VERSION}
 
@@ -49,9 +49,9 @@ linux: dep ## Build the binary file
 	@GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" -o dist/demo-api $(MAIN_FILE)
 
 pb: ## Copy mcube protobuf files to common/pb
-	@mkdir -pv common/pb/github.com/renmcc/toolbox/pb
-	@cp -r ${TOOLBOX_PKG_PATH}/pb/* common/pb/github.com/renmcc/toolbox/pb
-	@rm -rf common/pb/github.com/renmcc/toolbox/pb/*/*.go
+	@mkdir -pv common/pb/github.com/opengoats/goat/pb
+	@cp -r ${TOOLBOX_PKG_PATH}/pb/* common/pb/github.com/opengoats/goat/pb
+	@rm -rf common/pb/github.com/opengoats/goat/pb/*/*.go
 
 run: # Run Develop server
 	@go run $(MAIN_FILE) start -f etc/config.toml

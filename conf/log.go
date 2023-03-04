@@ -3,7 +3,7 @@ package conf
 import (
 	"fmt"
 
-	"github.com/renmcc/toolbox/logger/zap"
+	"github.com/opengoats/goat/logger/zap"
 )
 
 // LogFormat 日志格式
