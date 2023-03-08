@@ -10,6 +10,7 @@ import (
 	"github.com/renmcc/go-cmdb/apps/host"
 	"github.com/renmcc/go-cmdb/apps/host/impl"
 	"github.com/renmcc/go-cmdb/conf"
+	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,12 +22,17 @@ var (
 func TestCreate(t *testing.T) {
 	should := assert.New(t)
 	ins := host.NewHost()
-	ins.Id = "ins-03"
-	ins.Name = "test"
+	ins.ResourceId = "xxxxxxxxxxxxx"
+	ins.Vendor = 1
+	ins.Name = "测试ecs"
 	ins.Region = "cn-杭州"
-	ins.Type = "sm1"
-	ins.CPU = 1
-	ins.Memory = 2048
+	ins.PublicIP = "1.1.1.1"
+	ins.PrivateIP = "2.2.2.2"
+	ins.CPU = "4"
+	ins.Memory = "1028"
+	ins.OSType = "linux"
+	ins.OSName = "centos7"
+	ins.SerialNumber = xid.New().String()
 	// 查看结构体数据
 	typeInfo := reflect.TypeOf(*ins)
 	valInfo := reflect.ValueOf(*ins)
@@ -35,31 +41,31 @@ func TestCreate(t *testing.T) {
 		value := valInfo.Field(i).Interface()
 		fmt.Printf("%+v:%+v\n", key, value)
 	}
-	ins, err := service.CreateHost(context.Background(), ins)
+	err := service.CreateHost(context.Background(), ins)
 	if should.NoError(err) {
-		fmt.Println(ins)
+		fmt.Println(err)
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestListHost(t *testing.T) {
 	should := assert.New(t)
-	req := host.NewQueryHostRequest()
-	req.Name = "test"
-	set, err := service.QueryHost(context.Background(), req)
+	req := host.NewListHostRequest()
+	set, err := service.ListHost(context.Background(), req)
 	if should.NoError(err) {
 		for _, v := range set.Items {
 			fmt.Printf("v: %+v\n", *v)
 		}
+		fmt.Println(set.Total)
 	}
 }
 
-func TestDescribe(t *testing.T) {
+func TestQueryHost(t *testing.T) {
 	should := assert.New(t)
 
-	req := host.NewDescribeHostRequest("ins-05")
-	ins, err := service.DescribeHost(context.Background(), req)
+	req := host.NewQueryHostRequest("ins-05")
+	ins, err := service.QueryHost(context.Background(), req)
 	if should.NoError(err) {
-		fmt.Println(ins.Id)
+		fmt.Println(ins)
 	}
 }
 

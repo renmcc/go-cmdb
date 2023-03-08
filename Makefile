@@ -43,27 +43,17 @@ test-coverage: ## Run tests with coverage
 	@cat cover.out >> coverage.txt
 
 build: dep ## Build the binary file
-	@go build -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_TAG=${GIT_TAG}' -X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" -o dist/demo-api $(MAIN_FILE)
+	@go build -a -o dist/${OUTPUT_NAME} -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" ${MAIN_FILE}
 
 linux: dep ## Build the binary file
-	@GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" -o dist/demo-api $(MAIN_FILE)
-
-pb: ## Copy mcube protobuf files to common/pb
-	@mkdir -pv common/pb/github.com/opengoats/goat/pb
-	@cp -r ${TOOLBOX_PKG_PATH}/pb/* common/pb/github.com/opengoats/goat/pb
-	@rm -rf common/pb/github.com/opengoats/goat/pb/*/*.go
-
-gen: ## generate code
-	@protoc -I=. -I=common/pb --go_out=. --go-grpc_out=. --go_opt=module="${PKG}" --go-grpc_opt=module="${PKG}"  apps/*/pb/*.proto
-	@ go fmt ./...
-	@protoc-go-inject-tag -input=apps/*/*.pb.go
-	@mcube generate enum -p -m apps/*/*.pb.go
+	@GOOS=linux GOARCH=amd64 go build -a -o dist/${OUTPUT_NAME} -ldflags "-s -w" -ldflags "-X '${VERSION_PATH}.GIT_BRANCH=${BUILD_BRANCH}' -X '${VERSION_PATH}.GIT_COMMIT=${BUILD_COMMIT}' -X '${VERSION_PATH}.BUILD_TIME=${BUILD_TIME}' -X '${VERSION_PATH}.GO_VERSION=${BUILD_GO_VERSION}'" ${MAIN_FILE}
 
 run: # Run Develop server
 	@go run $(MAIN_FILE) start -f etc/config.toml
 
 clean: ## Remove previous build
-	@rm -f dist/*
+	@go clean .
+	@rm -f dist/${PROJECT_NAME}
 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

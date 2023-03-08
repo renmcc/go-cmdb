@@ -23,8 +23,8 @@ type Handler struct {
 // 完成了 Http Handler的注册
 func (h *Handler) Registry(r gin.IRouter) {
 	r.POST("/hosts", h.createHost)
-	r.GET("/hosts", h.queryHost)
-	r.GET("/hosts/:id", h.describeHost)
+	r.GET("/hosts", h.listHost)
+	r.GET("/hosts/:id", h.queryHost)
 	r.PUT("/hosts/:id", h.putHost)
 	r.PATCH("/hosts/:id", h.patchHost)
 	r.DELETE("/hosts/:id", h.deleteHost)

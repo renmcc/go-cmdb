@@ -1,11 +1,19 @@
 package impl
 
 const (
-	InsertResourceSQL = "INSERT INTO resource (id,vendor,region,create_at,expire_at,type,name,description,status,update_at,sync_at,accout,public_ip,private_ip) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
-	InsertDescribeSQL = "INSERT INTO host (resource_id, cpu, memory, gpu_amount, gpu_spec, os_type, os_name, serial_number) VALUES( ?,?,?,?,?,?,?,? );"
-	QueryHostSQL      = "SELECT r.*,h.cpu,h.memory,h.gpu_spec,h.gpu_amount,h.os_type,h.os_name,h.serial_number FROM resource AS r LEFT JOIN host AS h ON r.id = h.resource_id WHERE r.status=1 AND r.name Like ? AND r.description LIKE ? AND r.private_ip LIKE ? AND r.public_ip LIKE ? LIMIT ?,?"
-	DescribeHostSQL   = "SELECT r.*,h.cpu,h.memory,h.gpu_spec,h.gpu_amount,h.os_type,h.os_name,h.serial_number FROM resource AS r LEFT JOIN host AS h ON r.id = h.resource_id WHERE r.status=1 AND r.id = ?"
-	updateResourceSQL = "UPDATE resource SET vendor=?,region=?,expire_at=?,name=?,description=? WHERE status=1 AND id = ?"
-	updateHostSQL     = "UPDATE host SET cpu=?,memory=? WHERE resource_id = ?"
-	deleteHostSQL     = "UPDATE resource SET status=0 WHERE id = ?"
+	InsertHostSQL = `INSERT INTO host(xid,status,create_at,create_by,resource_id,vendor,name,region,expire_at,public_ip,private_ip,cpu,memory,os_type,os_name,serial_number) 
+					VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`
+
+	ListHostSQL = `SELECT xid,status,create_at,create_by,update_at,update_by,delete_at,delete_by,resource_id,vendor,name,region,expire_at,public_ip,private_ip,cpu,memory,os_type,os_name,serial_number 
+		FROM host 
+	  		WHERE STATUS = 1 AND private_ip LIKE ? AND serial_number LIKE ? LIMIT ?,?`
+
+	QueryHostSQL = `SELECT xid,status,create_at,create_by,update_at,update_by,delete_at,delete_by,resource_id,vendor,name,region,expire_at,public_ip,private_ip,cpu,memory,os_type,os_name,serial_number 
+		FROM host 
+	  		WHERE STATUS = 1 AND xid = ?`
+
+	updateHostSQL = `UPDATE host SET update_at=?,update_by=?,vendor=?,name=?,public_ip=?,private_ip=?,cpu=?,memory=?,os_type=?,os_name=?,serial_number=?
+	WHERE status=1 AND xid = ?`
+
+	deleteHostSQL = "UPDATE host SET status=0 WHERE xid = ?"
 )

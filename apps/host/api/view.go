@@ -29,7 +29,7 @@ func (h *Handler) createHost(c *gin.Context) {
 	}
 
 	// 进行接口调用, 写入数据库
-	ins, err := h.svc.CreateHost(c.Request.Context(), ins)
+	err := h.svc.CreateHost(c.Request.Context(), ins)
 	if err != nil {
 		h.log.Named("createHost").Error(err.Error())
 		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
@@ -44,17 +44,17 @@ func (h *Handler) createHost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"code": http.StatusCreated, "message": ins})
 }
 
-func (h *Handler) queryHost(c *gin.Context) {
-	// 默认查询参数
-	req := host.NewQueryHostRequest()
+func (h *Handler) listHost(c *gin.Context) {
 	// 从http请求的query string 中获取参数
 	qs := c.Request.URL.Query()
+	// 请求参数
+	req := host.NewListHostRequest()
 
 	var err error
 	if qs.Get("page_size") != "" {
 		req.PageSize, err = strconv.Atoi(qs.Get("page_size"))
 		if err != nil {
-			h.log.Named("queryHost").Error(err.Error())
+			h.log.Named("listHost").Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
 			return
 		}
@@ -63,27 +63,47 @@ func (h *Handler) queryHost(c *gin.Context) {
 	if qs.Get("page_number") != "" {
 		req.PageNumber, err = strconv.Atoi(qs.Get("page_number"))
 		if err != nil {
-			h.log.Named("queryHost").Error(err.Error())
+			h.log.Named("listHost").Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
 			return
 		}
 	}
 
-	if qs.Get("name") != "" {
-		req.Name = qs.Get("name") + "%"
-	}
-
-	if qs.Get("description") != "" {
-		req.Description = "%" + qs.Get("description") + "%"
+	if qs.Get("serial_number") != "" {
+		req.SerialNumber = qs.Get("serial_number") + "%"
 	}
 
 	if qs.Get("privateip") != "" {
 		req.PrivateIp = qs.Get("privateip") + "%"
 	}
 
-	if qs.Get("publicip") != "" {
-		req.PublicIp = qs.Get("publicip") + "%"
+	// 数据校验
+	if err := req.Validate(); err != nil {
+		h.log.Named("listHost").Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
+		return
 	}
+
+	// 进行数据库查询
+	set, err := h.svc.ListHost(c.Request.Context(), req)
+	if err != nil {
+		h.log.Named("listHost").Error(err.Error())
+		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "ServiceUnavailable"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": set})
+}
+
+func (h *Handler) queryHost(c *gin.Context) {
+
+	// 从http请求的query string 中获取参数
+	req := host.NewQueryHostRequest(c.Param("id"))
+
 	// 数据校验
 	if err := req.Validate(); err != nil {
 		h.log.Named("queryHost").Error(err.Error())
@@ -103,33 +123,6 @@ func (h *Handler) queryHost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"code": http.StatusOK, "message": set})
-}
-
-func (h *Handler) describeHost(c *gin.Context) {
-
-	// 从http请求的query string 中获取参数
-	req := host.NewDescribeHostRequest(c.Param("id"))
-
-	// 数据校验
-	if err := req.Validate(); err != nil {
-		h.log.Named("describeHost").Error(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "args error"})
-		return
-	}
-
-	// 进行数据库查询
-	set, err := h.svc.DescribeHost(c.Request.Context(), req)
-	if err != nil {
-		h.log.Named("describeHost").Error(err.Error())
-		if strings.Contains(err.Error(), "No connection could be made because the target machine actively refused it.") {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "ServiceUnavailable"})
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "require data error"})
-		}
-		return
-	}
-
 	// 空查询处理
 	if set == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "no rows in result set"})
@@ -141,7 +134,7 @@ func (h *Handler) describeHost(c *gin.Context) {
 
 func (h *Handler) putHost(c *gin.Context) {
 	// 从http请求的query string 中获取参数
-	req := host.NewDescribeHostRequest(c.Param("id"))
+	req := host.NewQueryHostRequest(c.Param("id"))
 
 	// 数据校验
 	if err := req.Validate(); err != nil {
@@ -151,7 +144,7 @@ func (h *Handler) putHost(c *gin.Context) {
 	}
 
 	// 进行数据库查询
-	set, err := h.svc.DescribeHost(c.Request.Context(), req)
+	set, err := h.svc.QueryHost(c.Request.Context(), req)
 	if err != nil {
 		h.log.Named("putHost").Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
@@ -173,7 +166,7 @@ func (h *Handler) putHost(c *gin.Context) {
 	}
 
 	// 确保ID一致
-	ins.Id = req.Id
+	ins.Xid = req.Xid
 
 	// 数据校验
 	if err := ins.Validate(); err != nil {
@@ -198,7 +191,7 @@ func (h *Handler) putHost(c *gin.Context) {
 
 func (h *Handler) patchHost(c *gin.Context) {
 	// 从http请求的query string 中获取参数
-	req := host.NewDescribeHostRequest(c.Param("id"))
+	req := host.NewQueryHostRequest(c.Param("id"))
 
 	// 数据校验
 	if err := req.Validate(); err != nil {
@@ -208,7 +201,7 @@ func (h *Handler) patchHost(c *gin.Context) {
 	}
 
 	// 进行数据库查询
-	set, err := h.svc.DescribeHost(c.Request.Context(), req)
+	set, err := h.svc.QueryHost(c.Request.Context(), req)
 	if err != nil {
 		h.log.Named("patchHost").Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
@@ -244,7 +237,7 @@ func (h *Handler) patchHost(c *gin.Context) {
 	}
 
 	// 确保ID一致
-	set.Id = req.Id
+	set.Xid = req.Xid
 
 	// 进行数据更新
 	ret, err := h.svc.UpdateHost(c.Request.Context(), set)
@@ -262,7 +255,7 @@ func (h *Handler) patchHost(c *gin.Context) {
 
 func (h *Handler) deleteHost(c *gin.Context) {
 	// 从http请求的query string 中获取参数
-	req := host.NewDescribeHostRequest(c.Param("id"))
+	req := host.NewQueryHostRequest(c.Param("id"))
 	// 数据校验
 	if err := req.Validate(); err != nil {
 		h.log.Named("deleteHost").Error(err.Error())
@@ -270,7 +263,7 @@ func (h *Handler) deleteHost(c *gin.Context) {
 		return
 	}
 	// 进行数据库查询
-	set, err := h.svc.DescribeHost(c.Request.Context(), req)
+	set, err := h.svc.QueryHost(c.Request.Context(), req)
 	if err != nil {
 		h.log.Named("deleteHost").Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": "query Host error"})
@@ -284,7 +277,7 @@ func (h *Handler) deleteHost(c *gin.Context) {
 	}
 
 	// 删除数据
-	deleteReq := host.NewDeleteHostRequest(set.Id)
+	deleteReq := host.NewDeleteHostRequest(set.Xid)
 	err = h.svc.DeleteHost(c.Request.Context(), deleteReq)
 	if err != nil {
 		h.log.Named("deleteHost").Error(err.Error())

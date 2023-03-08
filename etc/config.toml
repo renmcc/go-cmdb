@@ -9,7 +9,7 @@ host = "192.168.10.10"
 port = "3306"
 username = "go-cmdb"
 password = "Ren910202."
-database = "go_db"
+database = "cmdb"
 
 [log]
 level = "debug"

@@ -2,21 +2,19 @@ package impl
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/renmcc/go-cmdb/apps/host"
 )
 
-func (i *HostServiceImpl) CreateHost(ctx context.Context, ins *host.Host) (*host.Host, error) {
+func (i *HostServiceImpl) CreateHost(ctx context.Context, ins *host.Host) error {
 	// 默认值填充
-	ins.InjectDefault()
+	ins.InsertDefault()
 
-	// 把数据入库到 resource表和host表
-	// 一次需要往2个表录入数据, 我们需要2个操作 要么都成功，要么都失败, 事务的逻辑
+	// 开启事务
 	tx, err := i.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("start tx error, %s", err)
+		return err
 	}
 
 	// 通过Defer处理事务提交方式
@@ -35,46 +33,30 @@ func (i *HostServiceImpl) CreateHost(ctx context.Context, ins *host.Host) (*host
 	}()
 
 	// 插入Resource数据
-	rstmt, err := tx.PrepareContext(ctx, InsertResourceSQL)
+	rstmt, err := tx.PrepareContext(ctx, InsertHostSQL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rstmt.Close()
-
 	_, err = rstmt.ExecContext(ctx,
-		ins.Id, ins.Vendor, ins.Region, ins.CreateAt, ins.ExpireAt, ins.Type,
-		ins.Name, ins.Description, ins.Status, ins.UpdateAt, ins.SyncAt, ins.Account, ins.PublicIP,
-		ins.PrivateIP,
+		ins.Xid, ins.Status, ins.CreateAt, ins.CreateBy, ins.ResourceId, ins.Vendor,
+		ins.Name, ins.Region, ins.ExpireAt, ins.PublicIP, ins.PrivateIP, ins.CPU,
+		ins.Memory, ins.OSType, ins.OSName, ins.SerialNumber,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// 插入Describe 数据
-	dstmt, err := tx.PrepareContext(ctx, InsertDescribeSQL)
-	if err != nil {
-		return nil, err
-	}
-	defer dstmt.Close()
-
-	_, err = dstmt.ExecContext(ctx,
-		ins.Id, ins.CPU, ins.Memory, ins.GPUAmount, ins.GPUSpec,
-		ins.OSType, ins.OSName, ins.SerialNumber,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return ins, nil
+	return nil
 }
 
-func (i *HostServiceImpl) QueryHost(ctx context.Context, req *host.QueryHostRequest) (*host.HostSet, error) {
-	args := []interface{}{req.Name, req.Description, req.PrivateIp, req.PublicIp, req.OffSet(), req.GetPageSize()}
+func (i *HostServiceImpl) ListHost(ctx context.Context, req *host.ListHostRequest) (*host.HostSet, error) {
+	args := []interface{}{req.SerialNumber, req.PrivateIp, req.OffSet(), req.GetPageSize()}
 
-	i.log.Named("QueryHost").Infof("query sql: %s; %v", QueryHostSQL, args)
+	i.log.Named("ListHost").Infof("query sql: %s; %v", ListHostSQL, args)
 
 	// query stmt, 构建一个Prepare语句
-	stmt, err := i.db.PrepareContext(ctx, QueryHostSQL)
+	stmt, err := i.db.PrepareContext(ctx, ListHostSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -90,10 +72,8 @@ func (i *HostServiceImpl) QueryHost(ctx context.Context, req *host.QueryHostRequ
 	for rows.Next() {
 		// 没扫描一行,就需要读取出来
 		ins := host.NewHost()
-		if err := rows.Scan(&ins.Id, &ins.Vendor, &ins.Region, &ins.CreateAt, &ins.ExpireAt,
-			&ins.Type, &ins.Name, &ins.Description, &ins.Status, &ins.UpdateAt, &ins.SyncAt,
-			&ins.Account, &ins.PublicIP, &ins.PrivateIP,
-			&ins.CPU, &ins.Memory, &ins.GPUSpec, &ins.GPUAmount, &ins.OSType, &ins.OSName, &ins.SerialNumber,
+		if err := rows.Scan(&ins.Xid, &ins.Status, &ins.CreateAt, &ins.CreateBy, &ins.UpdateAt, &ins.UpdateBy, &ins.DeleteAt, &ins.DeleteBy, &ins.ResourceId, &ins.Vendor,
+			&ins.Name, &ins.Region, &ins.ExpireAt, &ins.PublicIP, &ins.PrivateIP, &ins.CPU, &ins.Memory, &ins.OSType, &ins.OSName, &ins.SerialNumber,
 		); err != nil {
 			return nil, err
 		}
@@ -106,12 +86,12 @@ func (i *HostServiceImpl) QueryHost(ctx context.Context, req *host.QueryHostRequ
 	return set, nil
 }
 
-func (i *HostServiceImpl) DescribeHost(ctx context.Context, req *host.DescribeHostRequest) (*host.Host, error) {
-	args := []interface{}{req.Id}
-	i.log.Named("DescribeHost").Infof("query sql: %s; %v", DescribeHostSQL, args)
+func (i *HostServiceImpl) QueryHost(ctx context.Context, req *host.QueryHostRequest) (*host.Host, error) {
+	args := []interface{}{req.Xid}
+	i.log.Named("QueryHost").Infof("query sql: %s; %v", QueryHostSQL, args)
 
 	// query stmt, 构建一个Prepare语句
-	stmt, err := i.db.PrepareContext(ctx, DescribeHostSQL)
+	stmt, err := i.db.PrepareContext(ctx, QueryHostSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -119,11 +99,8 @@ func (i *HostServiceImpl) DescribeHost(ctx context.Context, req *host.DescribeHo
 
 	// 取出数据，赋值结构体
 	ins := host.NewHost()
-	err = stmt.QueryRowContext(ctx, args...).Scan(
-		&ins.Id, &ins.Vendor, &ins.Region, &ins.CreateAt, &ins.ExpireAt,
-		&ins.Type, &ins.Name, &ins.Description, &ins.Status, &ins.UpdateAt, &ins.SyncAt,
-		&ins.Account, &ins.PublicIP, &ins.PrivateIP,
-		&ins.CPU, &ins.Memory, &ins.GPUSpec, &ins.GPUAmount, &ins.OSType, &ins.OSName, &ins.SerialNumber,
+	err = stmt.QueryRowContext(ctx, args...).Scan(&ins.Xid, &ins.Status, &ins.CreateAt, &ins.CreateBy, &ins.UpdateAt, &ins.UpdateBy, &ins.DeleteAt, &ins.DeleteBy, &ins.ResourceId, &ins.Vendor,
+		&ins.Name, &ins.Region, &ins.ExpireAt, &ins.PublicIP, &ins.PrivateIP, &ins.CPU, &ins.Memory, &ins.OSType, &ins.OSName, &ins.SerialNumber,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
@@ -157,22 +134,11 @@ func (i *HostServiceImpl) UpdateHost(ctx context.Context, ins *host.Host) (*host
 		}
 	}()
 
-	// 更新 Resource表
-	resStmt, err := tx.PrepareContext(ctx, updateResourceSQL)
+	resStmt, err := tx.PrepareContext(ctx, updateHostSQL)
 	if err != nil {
 		return nil, err
 	}
-	_, err = resStmt.ExecContext(ctx, ins.Vendor, ins.Region, ins.ExpireAt, ins.Name, ins.Description, ins.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	// 更新 Host表
-	hostStmt, err := tx.PrepareContext(ctx, updateHostSQL)
-	if err != nil {
-		return nil, err
-	}
-	_, err = hostStmt.ExecContext(ctx, ins.CPU, ins.Memory, ins.Id)
+	_, err = resStmt.ExecContext(ctx, ins.UpdateAt, ins.UpdateBy, ins.Vendor, ins.Name, ins.PublicIP, ins.PrivateIP, ins.CPU, ins.Memory, ins.OSType, ins.OSName, ins.SerialNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +173,7 @@ func (i *HostServiceImpl) DeleteHost(ctx context.Context, req *host.DeleteHostRe
 	if err != nil {
 		return err
 	}
-	_, err = resStmt.ExecContext(ctx, req.Id)
+	_, err = resStmt.ExecContext(ctx, req.Xid)
 	if err != nil {
 		return err
 	}

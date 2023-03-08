@@ -7,11 +7,11 @@ import (
 // host app  增删改查接口定义
 type Service interface {
 	// 录入主机
-	CreateHost(context.Context, *Host) (*Host, error)
+	CreateHost(context.Context, *Host) error
 	// 查询主机列表
-	QueryHost(context.Context, *QueryHostRequest) (*HostSet, error)
+	ListHost(context.Context, *ListHostRequest) (*HostSet, error)
 	// 查询主机详情
-	DescribeHost(context.Context, *DescribeHostRequest) (*Host, error)
+	QueryHost(context.Context, *QueryHostRequest) (*Host, error)
 	// 主机更新
 	UpdateHost(context.Context, *Host) (*Host, error)
 	// 主机删除
@@ -35,21 +35,38 @@ func NewHostSet() *HostSet {
 	}
 }
 
-type QueryHostRequest struct {
-	PageSize    int    `json:"page_size" validate:"max=50"`
-	PageNumber  int    `json:"page_number" `
-	Name        string `json:"name" validate:"max=12"`
-	Description string `json:"description" validate:"max=12"`
-	PrivateIp   string `json:"privateip" validate:"max=16"`
-	PublicIp    string `json:"publicip" validate:"max=16"`
+type ListHostRequest struct {
+	PageSize     int    `json:"page_size" validate:"max=50"`
+	PageNumber   int    `json:"page_number" `
+	SerialNumber string `json:"serial_number" validate:"max=15"`
+	PrivateIp    string `json:"privateip" validate:"max=16"`
 }
 
-func (req *QueryHostRequest) GetPageSize() uint {
+func (req *ListHostRequest) GetPageSize() uint {
 	return uint(req.PageSize)
 }
 
-func (req *QueryHostRequest) OffSet() int64 {
+func (req *ListHostRequest) OffSet() int64 {
 	return int64((req.PageNumber - 1) * req.PageSize)
+}
+
+// 结构体校验
+func (req *ListHostRequest) Validate() error {
+	return validate.Struct(req)
+}
+
+// 构造函数
+func NewListHostRequest() *ListHostRequest {
+	return &ListHostRequest{
+		PageSize:     20,
+		PageNumber:   1,
+		SerialNumber: "%",
+		PrivateIp:    "%",
+	}
+}
+
+type QueryHostRequest struct {
+	Xid string `json:"xid"  validate:"required"`
 }
 
 // 结构体校验
@@ -58,35 +75,14 @@ func (req *QueryHostRequest) Validate() error {
 }
 
 // 构造函数
-func NewQueryHostRequest() *QueryHostRequest {
+func NewQueryHostRequest(xid string) *QueryHostRequest {
 	return &QueryHostRequest{
-		PageSize:    20,
-		PageNumber:  1,
-		Name:        "%",
-		Description: "%",
-		PrivateIp:   "%",
-		PublicIp:    "%",
-	}
-}
-
-type DescribeHostRequest struct {
-	Id string `json:"id"  validate:"required,max=15"`
-}
-
-// 结构体校验
-func (req *DescribeHostRequest) Validate() error {
-	return validate.Struct(req)
-}
-
-// 构造函数
-func NewDescribeHostRequest(id string) *DescribeHostRequest {
-	return &DescribeHostRequest{
-		Id: id,
+		Xid: xid,
 	}
 }
 
 type DeleteHostRequest struct {
-	Id string `json:"id"  validate:"required,max=15"`
+	Xid string `json:"xid"  validate:"required"`
 }
 
 // 结构体校验
@@ -95,8 +91,8 @@ func (req *DeleteHostRequest) Validate() error {
 }
 
 // 构造函数
-func NewDeleteHostRequest(id string) *DeleteHostRequest {
+func NewDeleteHostRequest(xid string) *DeleteHostRequest {
 	return &DeleteHostRequest{
-		Id: id,
+		Xid: xid,
 	}
 }
